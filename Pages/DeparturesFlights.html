@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script src="../../Scripts/jquery-3.3.1.js"></script>
+    <script src="../../Scripts/jquery-3.3.1.min.js"></script>
+    <script src="../../Scripts/bootstrap.min.js"></script>
+    <link href="../../Content/bootstrap-solar.css" rel="stylesheet">
+    <title>Departure Flights</title>
+</head>
+<body style="background-image:url(../Images/plane23.jpg); background-repeat:no-repeat; background-position:center; background-attachment:fixed; background-size:cover">
+    <table border="1" width="100%" id="DepartureTable" style="text-align:center">
+        <tr class="table-danger">
+            <th>Airline company</th>
+            <th>Flight</th>
+            <th>Departing from</th>
+            <th>To</th>
+            <th>Est time</th>
+        </tr>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                getData();
+                setInterval(getData, 600000);
+            })
+
+            function getData() {
+                $.ajax({
+                    url: "http://localhost:60341/api/anonymousFacade/12HoursDeparture"
+                }).then((result) => {
+                    localStorage.setItem("Departures", JSON.stringify(result));
+                    localStorage.setItem("LastUpdateTime", new Date());
+                    console.log(result);
+                    fillTable(result);
+                })
+                    .catch((err) => {
+                        if (localStorage.getItem("Departures") && err.status != 404) {
+                            fillTable(JSON.parse(localStorage.getItem("Departures")));
+                            $("#lastUpdateTime").replaceWith(localStorage.getItem("LastUpdateTime"));
+                        }
+                        else
+                            document.getElementById("noFlight").style.visibility = "visible";
+                        console.log(err);
+                    })
+            }
+            function fillTable(result) {
+                $("#DepartureTable").find("tr:gt(0)").remove();
+                $.each((result), (i, oneFlight) => {
+                    $("#DepartureTable").append('<tr style="text-align:center; color:white">' +
+                        "<td>" + oneFlight.AirlineName +
+                        "<td>" + oneFlight.FlightId + "</td>" +
+                        "<td>" + oneFlight.OriginCountry + "</td>" +
+                        "<td>" + oneFlight.DestinationCountry + "</td>" +
+                        "<td>" + oneFlight.DepartureTime + "</td>")
+                });
+            }
+        </script>
+    </table>
+    <div id="lastUpdateTime">
+    </div>
+    <div id="noFlight" style="visibility:hidden">
+        <div style="visibility:hidden; text-align:center; font-size:medium; font:bold; margin-top:10px; color:black">No departure flights were found</div>
+        <img src="../Images/nofligth.jpg" style="visibility:hidden; display:block; margin-left:auto;
+    margin-right:auto; margin-top:20px" />
+    </div>
+</body>
+</html>

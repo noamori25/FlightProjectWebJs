@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script src="../../Scripts/jquery-3.3.1.js"></script>
+    <script src="../../Scripts/jquery-3.3.1.min.js"></script>
+    <script src="../../Scripts/bootstrap.min.js"></script>
+    <link href="../../Content/bootstrap-solar.css" rel="stylesheet">
+    <title>Search</title>
+</head>
+<body style="background-image:url(../Images/img.jpg); background-repeat:no-repeat; background-position:center; background-attachment:fixed; background-size:cover">
+    <div>
+        <select id="options" class="btn btn-danger dropdown-toggle">
+            <option value="nameOfAirline">Name of airline company</option>
+            <option value="desCountry">Name of destination country</option>
+            <option value="oriCountry">Name of origin country</option>
+            <option value="flightNum">Number of flight</option>
+        </select>
+        <input type="text" id="tb" />
+        <button class="btn btn-success" onclick="onSearchClick()">
+            Search landing and departures
+        </button>
+        <button id="Landing" class="btn btn-danger" onclick="typeLanding()">Search Landing only</button>
+        <button id="Departure" class="btn btn-danger" onclick="typeDeparture()">Search Departure only</button>
+        <table  border="1" width="100%" id="FlightBySearch" style="text-align:center"></table>
+    </div>
+    <script type="text/javascript">
+        const data = {
+            FlightNumber: 0,
+            AirlineName: "",
+            DesCountry: "",
+            OriCountry: "",
+            FlightType: ""
+        };
+        function typeLanding() {
+            data.FlightType = 'Landing'
+            onSearchClick();
+        };
+        function typeDeparture() {
+            data.FlightType = 'Departure'
+            onSearchClick();
+        };
+        function onSearchClick() {
+            const selected = $("#options").val();
+            const tb = $("#tb").val();
+            switch (selected) {
+                case "flightNum":
+                    {
+                        data.FlightNumber = tb;
+                        break;
+                    }
+
+                case "nameOfAirline":
+                    {
+                        data.AirlineName = tb;
+                        break;
+                    }
+                case "desCountry":
+                    {
+                        data.DesCountry = tb;
+                        break;
+                    }
+                case "oriCountry":
+                    {
+                        data.OriCountry = tb;
+                        break;
+                    }
+
+            }
+
+            $.ajax({
+                url: "http://localhost:60341/api/anonymousFacade/SearchByParams",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            }).then((result) => {
+                $("#FlightBySearch").append('<tr class="table-danger">' +
+                    "<th>Flight</th>" +
+                    "<th>Airline Comapny</th>" +
+                    "<th>Departing from</th>" +
+                    "<th>To</th>" +
+                    "<th>Departure time</th>" +
+                    "<th>Landing time</th>" +
+                    "</tr>");
+                $("#FlightBySearch").find("tr:gt(0)").remove();
+                $.each(result, function (index, value) {
+                    $("#FlightBySearch").append('<tr style="text-align:center; color:black">' +
+                        "<td>" + result[index].FlightId + "</td>" +
+                        "<td>" + result[index].AirlineName + "</td>" +
+                        "<td>" + result[index].OriginCountry + "</td>" +
+                        "<td>" + result[index].DestinationCountry + "</td>" +
+                        "<td>" + result[index].DepartureTime + "</td>" +
+                        "<td>" + result[index].LandingTime + "</td>")
+                })
+            });
+        }
+    </script>
+</body>
+</html>
