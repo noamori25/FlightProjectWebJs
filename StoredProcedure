@@ -1,0 +1,173 @@
+ALTER procedure [dbo].[LANDING_FOR_THE_NEXT_12H_AND_LAST_4H]
+AS
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, 
+Flights.LANDING_TIME,
+case when GETDATE() > Flights.LANDING_TIME then 'Landed'
+when GETDATE() >= DATEADD(HOUR, -2, Flights.LANDING_TIME)
+AND GETDATE() <= DATEADD(MINUTE, -15, Flights.LANDING_TIME) then 'Final'
+when GETDATE() >= DATEADD(minute, -15, Flights.LANDING_TIME)
+and Flights.LANDING_TIME > GETDATE() then 'Landing'
+else 'Not Final' end
+as [STATUS]
+
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+WHERE Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+_______________________________________________________________________________
+ALTER procedure [dbo].[DEPARTURE_FOR_THE_NEXT_12H]
+AS
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS FLIGHT_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+WHERE Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()
+__________________________________________________________________________________
+ALTER procedure [dbo].[SEARCH_BY_AIRELINE_NAME] @AirlineName varchar(50),@FlightType varchar(50)
+as
+if @FlightType = 'Landing'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where AirlineCompanies.AIRLINE_NAME LIKE @AirlineName+'%'
+and Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+else if @FlightType = 'Departure'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where AirlineCompanies.AIRLINE_NAME LIKE @AirlineName+'%'
+and Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()
+else if @FlightType = ''
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where AirlineCompanies.AIRLINE_NAME LIKE @AirlineName+'%'
+and (Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+or 
+(Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()))
+____________________________________________________
+ALTER procedure [dbo].[SEARCH_BY_DES_COUNTRY] @CountryName varchar(50), @FlightType varchar(50)
+as
+if @FlightType = 'Landing'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where C1.COUNTRY_NAME LIKE @CountryName+'%'
+and Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+else if @FlightType = 'Departure'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where C1.COUNTRY_NAME LIKE @CountryName+'%'
+and Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()
+else if @FlightType = ''
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where C1.COUNTRY_NAME LIKE @CountryName+'%'
+and (Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+or 
+(Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()))
+_________________________________________________________
+ALTER procedure [dbo].[SEARCH_BY_FLIGHT_NUM] @FlightId bigint,@FlightType varchar(50)
+as
+if @FlightType = 'Landing'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where Flights.ID = @FlightId
+and Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+else if @FlightType = 'Departure'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where Flights.ID = @FlightId
+and Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()
+else if @FlightType = ''
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where Flights.ID = @FlightId
+and (Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+or 
+(Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()))
+___________________________________________________________________
+ALTER procedure [dbo].[SEARCH_BY_ORI_COUNTRY] @CountryName varchar(50), @FlightType varchar(50)
+as
+if @FlightType = 'Landing'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where c.COUNTRY_NAME LIKE @CountryName+'%'
+and Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+else if @FlightType = 'Departure'
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where c.COUNTRY_NAME LIKE @CountryName+'%'
+and Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()
+else if @FlightType = ''
+select Flights.ID as FLIGHT_NUMBER, AirlineCompanies.AIRLINE_NAME,c.COUNTRY_NAME AS COMING_FROM, C1.COUNTRY_NAME AS FLIGHT_TO, Flights.LANDING_TIME, Flights.DEPARTURE_TIME
+from Flights join AirlineCompanies
+on Flights.AIRLINECOMPANY_ID = AirlineCompanies.ID
+JOIN Countries AS c
+ON Flights.ORIGIN_COUNTRY_CODE = c.ID
+JOIN Countries AS C1 ON Flights.DESTINATION_COUNTRY_CODE = C1.ID
+where c.COUNTRY_NAME LIKE @CountryName+'%'
+and (Flights.LANDING_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.LANDING_TIME >=  DateAdd(Hour, -4, GetDate())
+or 
+(Flights.DEPARTURE_TIME <=  DateAdd(Hour, 12, GetDate())
+and Flights.DEPARTURE_TIME >= GETDATE()))
